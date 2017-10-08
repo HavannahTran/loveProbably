@@ -1,0 +1,169 @@
+/* GeneralPanel.java
+ Description: This class will create the overall GUI panel that the user interacts with.
+ 
+ Assignment: CS230 Project
+ Written by: Havannah Tran (htran), Kaylie Cox (kcox3)
+ Modified by:
+ Modified date: 05/08/2017
+ */
+
+import java.awt.*;
+import javax.swing.*;
+import java.awt.event.*;
+
+public class GeneralPanel extends JPanel
+{
+  public JTextField input; //the input for the user to 
+  public JLabel text, directions; //prompt text and directions
+  public JLabel errorMsg = new JLabel("<html><div>Invalid input. Please input a valid character."+
+                                      "</div></html>");
+  public StoryTree story;
+  public JPanel inputField;
+  
+  /**
+   *Constructor for General Panel:
+   * Sets up in this panel a label introducing this application and subsequent options
+   */ 
+  public GeneralPanel(StoryTree story)
+  {
+    this.story = story;
+    setLayout(new BorderLayout(2,2));
+    
+    // the text for the game and the prompts continuing
+    text = new JLabel(story.getText());
+    
+    input = new JTextField(5);
+    inputField = makeInputBox(story);
+    add(makeAPromptPanel(), BorderLayout.CENTER);
+    add(inputField, BorderLayout.SOUTH);
+  }
+  
+  /**
+   * Makes the panel with all the prompt text
+   * @returns JPanel with prompt text
+   */
+  private JPanel makeAPromptPanel(){
+    JPanel panel= new JPanel();
+    panel.add(text);
+    panel.setBackground(Color.pink);
+    return panel;
+  }
+  
+  /**
+   * Makes the input panel
+   * @returns JPanel with the input box
+   * @param StoryTree story
+   */
+  private JPanel makeInputBox(StoryTree story){
+    JPanel panel = new JPanel(); 
+    
+    panel.setLayout(new BorderLayout(2,2));
+    
+    panel.add(errorPanel(), BorderLayout.NORTH);
+    panel.add(input, BorderLayout.SOUTH);  
+    input.addActionListener(new InputListener());
+    return panel;
+  }
+  
+  /**
+   * Makes the error panel and keeps it hidden unless invalid input is entered
+   *  @returns JPanel with error message
+   */
+  private JPanel errorPanel() {
+    JPanel panel = new JPanel();
+    
+    panel.add(errorMsg);
+    errorMsg.setForeground(Color.red);
+    errorMsg.setVisible(false);
+    
+    return panel;
+  }
+  
+  /**
+   * Makes the restart game panel and keeps it hidden unless an EndNode is reached
+   *  @returns JPanel 
+   */
+  private JPanel endPanel() {
+    
+    JPanel panel = new JPanel();
+    
+    //add play again
+    JButton playAgain = new JButton("Play Again");
+    playAgain.addActionListener(new ReplayListener());   
+    panel.add(playAgain);
+    
+    return panel;
+  }
+  
+  /**
+   * Listener class for the button to restart the game
+   */
+  private class ReplayListener implements ActionListener {
+  
+   /**
+   * Creates a listener for the replay button
+   * that allows the user to restart the game
+   *  @param ActionEvent event
+   */
+    public void actionPerformed (ActionEvent event) {
+      removeAll();
+      story = new StoryTree();
+      text = new JLabel(story.getText());
+      
+      //recreate original panel
+      input = new JTextField(5);
+      inputField = makeInputBox(story);
+      add(makeAPromptPanel(), BorderLayout.CENTER);
+      add(inputField, BorderLayout.SOUTH);
+    }
+  }
+  
+  /**
+   * Listener class for the JTextField at the bottom of the GUI
+   * to take in the user input and traverse to the correct node.
+   * If user inputs an invalid option, prompts user for a correct
+   * input.
+   */
+  private class InputListener implements ActionListener{
+   /**
+   * Creates a listener for the input
+   * that reassigns the node represented
+   * according to the user's choice
+   *  @param ActionEvent event
+   */
+    public void actionPerformed (ActionEvent event) {
+      
+      String userInput = (String) input.getText().toUpperCase();
+      
+      if (story.getCurrentNode() instanceof StoryNode){
+        StoryNode temp = (StoryNode) story.getCurrentNode();
+        
+        //verify the input is valid before trying to go to next node
+        if (!temp.isOption(userInput)){ 
+          //System.out.println (temp.isOption(userInput));
+          errorMsg.setVisible(true);
+          userInput = (String) input.getText().toUpperCase();
+        } else {
+          errorMsg.setVisible(false);
+        }
+        
+        story.makeChoice(userInput);
+        text.setText(story.getText());
+        
+        //clear textfield
+        input.setText("");
+      }
+      if (story.getCurrentNode() instanceof EndNode) {
+        text.setText(story.getText());
+        remove(inputField);
+        //reset window
+        revalidate();
+        repaint();
+        add(endPanel(), BorderLayout.SOUTH);
+        //reset window
+        revalidate();
+        repaint();
+      }
+    }
+  }
+}
